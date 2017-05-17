@@ -1,14 +1,13 @@
 package com.example.wd42.myapplication;
 
-import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.IBinder;
-import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -17,60 +16,87 @@ import java.io.IOException;
 public class PlaybackService extends Service {
 
     private MediaPlayer mediaPlayer;
+    final Service thisService = this;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        mediaPlayer=new MediaPlayer();
-
-        Log.d("PlaybackService", "Started");
-        try {
-            //Toast t = Toast.makeText(this,"loading initialized",Toast.LENGTH_SHORT);
+        super.onStartCommand(intent, flags, startId);
 
 
-            mediaPlayer.setDataSource("http://www.radiofeeds.co.uk/bbcradio3.pls");
-            //mediaPlayer.setDataSource("rtsp://94.42.167.5:1935/live/rm.sdp");
+
+        if (intent != null) {
+
+            mediaPlayer = new MediaPlayer();
+
+            logDebug("Service started");
+
+            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    logDebug("Ready to play!");
+
+                    Intent broadcastIntent = new Intent("PLAYING");
+                    LocalBroadcastManager.getInstance(thisService).sendBroadcast(broadcastIntent);
+
+                    mp.start();
+                }
+            });
+
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    logDebug("Playback is over");
+                }
+            });
+
+            mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    logDebug("There is a problem with playback");
+                    return false;
+                }
+            });
+
+            mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+                @Override
+                public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                    logDebug("Buffering");
+                }
+            });
+
+            try {
+                mediaPlayer.setDataSource(intent.getStringExtra("ADDRESS"));
+
+                Intent broadcastIntent = new Intent("LOADING");
+                LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
+
+                mediaPlayer.prepareAsync();
+
+                logDebug("loading initialized");
+                mediaPlayer.start();
+            } catch (IOException e) {
+                //toast - dupa
+                logDebug("Input/Output Exception");
 
 
-            mediaPlayer.prepare();
-
-            Toast.makeText(this,"loading initialized",Toast.LENGTH_SHORT).show();
-
-            mediaPlayer.start();
-
-            Intent clickIntent = new Intent(this,MainActivity.class);
-            PendingIntent pendingIntent =
-                    PendingIntent.getActivity(this,(int)System.currentTimeMillis(),clickIntent,0);
-
-
-            Notification notification = new Notification.Builder(this)
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentTitle(intent.getStringExtra("playerName"))
-                    .setContentText(intent.getStringExtra("itemName"))
-                    .setContentIntent(pendingIntent)
-                    .build();
-
-            NotificationManager notificationManager =
-                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-            notificationManager.notify(0,notification);
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            }
         }
-
         return START_STICKY;
-
-}
+    }
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this,"Stopping playback",Toast.LENGTH_SHORT).show();
         mediaPlayer.stop();
+        mediaPlayer.release();
+
+        Intent broadcastIntent = new Intent("STOPPING");
+        LocalBroadcastManager.getInstance(thisService).sendBroadcast(broadcastIntent);
+
+        makeShortToast("Playback stopped");
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         notificationManager.cancel(0);
-
     }
 
     @Nullable
@@ -78,4 +104,14 @@ public class PlaybackService extends Service {
     public IBinder onBind(Intent intent) {
         return null;
     }
+
+    private void logDebug(String msg) {
+        Log.e(this.getClass().getSimpleName(), msg);
+    }
+
+
+    private void makeShortToast(String string) {
+        Toast.makeText(this, string, Toast.LENGTH_SHORT).show();
+    }
+
 }
