@@ -7,11 +7,10 @@
     tools:context="com.example.wd42.myapplication.MainActivity">
 
     <Button
-        android:id="@+id/stopbutton"
+        android:id="@+id/playback_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="stopPlayback"
-        android:text="Stop"
+        android:text="@string/playback_button_text"
         tools:ignore="MissingConstraints"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginBottom="8dp"
@@ -19,14 +18,26 @@
         app:layout_constraintRight_toRightOf="parent"
         android:layout_marginEnd="8dp" />
 
+
     <TextView
-        android:id="@+id/currentRadio"
+        android:id="@+id/radio_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginBottom="8dp"
         android:layout_marginLeft="8dp"
         app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginStart="8dp" />
+
+    <TextView
+        android:id="@+id/current_radio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@id/radio_status"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginBottom="16dp"
+        android:textSize="16sp"
+        android:layout_marginLeft="8dp"
         android:layout_marginStart="8dp" />
 
     <ListView
@@ -39,7 +50,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_marginBottom="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/stopbutton" />
+        app:layout_constraintBottom_toTopOf="@+id/playback_button" />
 
 
 </android.support.constraint.ConstraintLayout>

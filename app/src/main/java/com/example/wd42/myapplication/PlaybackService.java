@@ -2,7 +2,6 @@ package com.example.wd42.myapplication;
 
 import android.app.NotificationManager;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.IBinder;
@@ -21,65 +20,92 @@ public class PlaybackService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-
-
+        final Intent thatIntent = intent;
+        logDebug("Service started");
 
         if (intent != null) {
-
-            mediaPlayer = new MediaPlayer();
-
-            logDebug("Service started");
-
-            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    logDebug("Ready to play!");
-
-                    Intent broadcastIntent = new Intent("PLAYING");
-                    LocalBroadcastManager.getInstance(thisService).sendBroadcast(broadcastIntent);
-
-                    mp.start();
-                }
-            });
-
-            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    logDebug("Playback is over");
-                }
-            });
-
-            mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                @Override
-                public boolean onError(MediaPlayer mp, int what, int extra) {
-                    logDebug("There is a problem with playback");
-                    return false;
-                }
-            });
-
-            mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-                @Override
-                public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                    logDebug("Buffering");
-                }
-            });
-
-            try {
-                mediaPlayer.setDataSource(intent.getStringExtra("ADDRESS"));
-
-                Intent broadcastIntent = new Intent("LOADING");
-                LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
-
-                mediaPlayer.prepareAsync();
-
-                logDebug("loading initialized");
-                mediaPlayer.start();
-            } catch (IOException e) {
-                //toast - dupa
-                logDebug("Input/Output Exception");
-
-
+            logDebug("Intent is not NULL");
+            if (mediaPlayer == null) {
+                logDebug("mediaPlayer is NULL");
+                mediaPlayer = new MediaPlayer();
             }
+            String parameter = thatIntent.getStringExtra("PARAM");
+
+            /*if(parameter.equals("PLAY")) {*/
+
+            if (!mediaPlayer.isPlaying()) {
+                logDebug("media player is not playing - I will start it");
+                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        logDebug("Ready to play!");
+
+                        Intent broadcastIntent = new Intent("PLAYING_BROADCAST");
+                        broadcastIntent.putExtra("NAME", thatIntent.getStringExtra("NAME"));
+                        logDebug("Now playing: " + thatIntent.getStringExtra("NAME"));
+
+                        LocalBroadcastManager.getInstance(thisService).sendBroadcast(broadcastIntent);
+
+                        mp.start();
+                    }
+                });
+
+                mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    @Override
+                    public void onCompletion(MediaPlayer mp) {
+                        logDebug("Playback is over");
+                    }
+                });
+
+                mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                    @Override
+                    public boolean onError(MediaPlayer mp, int what, int extra) {
+                        logDebug("There is a problem with playback");
+                        return false;
+                    }
+                });
+
+                mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+                    @Override
+                    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                        logDebug("Buffering");
+                    }
+                });
+
+                try {
+                    mediaPlayer.setDataSource(intent.getStringExtra("ADDRESS"));
+
+                    Intent broadcastIntent = new Intent("LOADING");
+                    LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
+
+                    mediaPlayer.prepareAsync();
+
+                    logDebug("loading initialized");
+                    mediaPlayer.start();
+                } catch (IOException e) {
+                    //toast - dupa
+                    logDebug("Input/Output Exception");
+                }
+
+
+          /*  } else if(parameter.equals("STOP_PLAYBACK")){
+                mediaPlayer.stop();
+                mediaPlayer.release();
+                mediaPlayer = null;
+
+                Intent broadcastIntent = new Intent("STOPPING");
+                LocalBroadcastManager.getInstance(thisService).sendBroadcast(broadcastIntent);*/
+            }
+        /*}*/
+        } else {
+            logDebug("media player is playing so I'll try to stop it");
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer = null;
+
+            Intent broadcastIntent = new Intent("STOPPING");
+            LocalBroadcastManager.getInstance(thisService).sendBroadcast(broadcastIntent);
+
         }
         return START_STICKY;
     }
@@ -113,5 +139,6 @@ public class PlaybackService extends Service {
     private void makeShortToast(String string) {
         Toast.makeText(this, string, Toast.LENGTH_SHORT).show();
     }
+
 
 }

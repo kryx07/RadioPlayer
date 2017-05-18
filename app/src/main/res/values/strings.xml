@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">Radio Player v2.0</string>
-    <string name="loading">it\'s loading</string>
-    <string name="playing">it\'s playing</string>
-    <string name="not_playing">it\'s not playing</string>
+    <string name="app_name">BBC Radio Player v2.0</string>
+    <string name="loading">loading</string>
+    <string name="playing">playing</string>
+    <string name="not_playing">not playing</string>
+    <string name="playback_button_text">Playback</string>
 </resources>
